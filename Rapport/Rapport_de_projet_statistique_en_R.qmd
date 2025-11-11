@@ -1,0 +1,389 @@
+---
+title: "Rapport de projet statistique inférentielle en R"
+format:
+  pdf:
+    toc: true
+    number-sections: true
+    colorlinks: true
+---
+
+```{r}
+#| label: setup
+#| include: false
+
+# Fixer le miroir CRAN (pour éviter l'erreur)
+options(repos = c(CRAN = "https://cloud.r-project.org"))
+
+# Charger ou installer les packages nécessaires
+packages <- c("plotly", "webshot2", "tinytex")
+for (pkg in packages) {
+  if (!requireNamespace(pkg, quietly = TRUE)) {
+    install.packages(pkg)
+  }
+}
+
+# Optionnel : charger les bibliothèques
+library(plotly)
+library(webshot2)
+```
+
+
+# ***Exercice 1 : Algortihme en R*** 
+
+1. Calculer la moyenne et la variance d'une série statistique des données entrées par un utilisateur
+
+- Première du code : 
+  - On demande à l'utilisateur de saisir l'éffectif de la série statiqtique
+  - On initialise un vecteur 'numeric' de la longueur spécifiée
+  - On demande de saisir les différents éléments de la série statistique
+  
+
+![](../images/code_1.png)
+
+2. Resultat de la première partie du code
+
+![](../images/code_2.png)
+
+
+- Seconde partie du code : 
+
+  - On calcul la moyenne de la série puis on l'affiche
+  - On calcul la variance de l'echantillon ()
+
+
+![](../images/code_3.png)
+
+3. Résultat du code
+
+
+![](../images/code_4.png)
+
+
+  
+# ***Exercice 2 : Influence de l'alcool sur le temps de réaction*** 
+
+1. Tracer de la fonction de repartition empirique correspondant aux deux 
+situations (utilisation de simple plot())
+
+![](../images/Rplot.png)
+
+
+1.1  Tracer de la fonction de repartition empirique correspondant aux deux 
+situations (utilisation de simple ggplot2())
+
+![](../images/Rplot_fct.png)
+
+
+2. Test d'hypothèse pour comparer les deux groupes
+
+Il s'agit de montrer l'influence de l'alcool sur le temps de réaction au 
+seuil de risque $\alpha$ = 5% soit un seuil de confiance de 95%. 
+Pour ce faire on utilisera le test de student car les données sont distribuées 
+dans chaque groupe.
+```{r}
+sans_alcool <- c(0.68, 0.64, 0.68, 0.82, 0.58, 0.80, 0.72, 0.65, 0.84, 0.73, 
+                 0.65, 0.59, 0.78, 0.67, 0.65)
+
+
+# Le vecteur avec_vecteur
+avec_alcool <- c(0.73, 0.62, 0.66, 0.92, 0.68, 0.87, 0.77, 0.70, 0.88, 0.79, 
+                 0.72, 0.60, 0.78, 0.66, 0.68)
+```
+
+2.1. Formulation des hypothèses
+  
+- Hypothèse nulle ($H_0$) pour p-value > 0.05 : Les caractères sont normalement 
+distribués (l'alcool n'a pas d'influence sur le temps de réaction.)
+
+- Hypothèse alternative($H_1$) pour p-value < 0.05 : Les caractères ne sont pas 
+normalement distribués (l'alcool à une influence sur le temps de réction.)
+
+2.2. Il s'agit de déterminer le risque à prendre pour tirer une conclusion érroné
+soit $\alpha$ = 0.05.
+
+
+2.3. Vérification des données
+
+```{r}
+# Vérification de la normalité
+shapiro_sans_alcool <- shapiro.test(sans_alcool)
+shapiro_avec_alcool <- shapiro.test(avec_alcool)
+
+cat("Le taux de normalité pour le groupe sans alcool")
+shapiro_sans_alcool
+
+cat("Le taux de normalité pour le groupe avec alcool")
+shapiro_avec_alcool
+``` 
+
+Le test de Shapiro-Wilk montre que les deux groupes _avec alcoool_ et _sans alcool_
+suivent une distribution normale (p > 0.05).
+Par conséquent l'hypothèse de normalité est respecté pour les deux échantillons.
+
+
+2.4. Test d'égalité des variances : Déterminer s'il y'a une différence significative
+entre les variance.
+
+```{r}
+var_test <- var.test(sans_alcool, avec_alcool)
+cat("Test dégalité des variance")
+print(var_test)
+```
+
+
+Dans notre cas on p-value (0.5139 > 0.05), il indique qu'il n'y a pas de différence
+significative entre les deux variances. 
+On peut donc supposer l'egalité des variances entre les deux groupes.
+
+
+2.5. Test de student 
+
+```{r}
+
+# Test de student pour les échantillons indépendants
+test_t <- t.test(avec_alcool, sans_alcool, var.equal = TRUE)
+cat("Test de student pour les échantillons")
+print(test_t)
+
+```
+***Résultat du test de student :***
+
+* Statistique t : **1.1923**
+* Dégré de liberté (n - 2) : **28**
+* p-value : **0.2432**
+* Intervalle de confiance à 95% : **[-0.02776448 ; 0.10509781]**
+* Moyenne du groupe sans alcool : **0.6986667**
+* Moyenne du groupe avec alcool : **0.7373333**
+
+Les tests préliminaires de Shapiro–Wilk ont confirmé la normalité des 
+distributions dans les deux groupes (p > 0.05), et le test de Fisher a 
+indiqué l’égalité des variances (p > 0.05).
+Le test t de Student pour échantillons indépendants 
+(t = 1.1923, df = 28, p = 0.2432) ne montre aucune différence significative 
+entre les moyennes du groupe avec alcool ($M_{\text{avec alcool}} =  0.7373333$) 
+et du groupe sans alcool ($M_{\text{sans alcool}} =  0.6986667$).
+Ainsi, la consommation d’alcool ne semble pas avoir d’effet significatif sur 
+la variable mesurée dans cet échantillon.
+
+Par conséquent l'hypothèse $H_0$ est vérifié. L'alcool n'a pas d'influence 
+significative sur le temps de réaction.
+
+
+
+
+# ***Exercice 3 : Analyse de données pour enfant***
+
+
+1. Création des vecteur
+
+```{r}
+# Création des vecteurs
+
+#vecteurs individus
+Individus = c("Erika", "Célia", "Erik", "Eve", "Paul", "jean", "Adan", "Louis",
+              "Jules", "Léo")
+ 
+#vecteurs Poids
+Poids = c(16, 14, 13.5, 15.4, 16.5, 16, 17, 14.8, 17, 16.7)
+
+#vecteurs Taille
+Taille = c(100.0, 97.0, 95.5, 101.0, 100.0, 98.5, 103.0, 98.0, 101.5, 100.0)
+ 
+#vecteurs sexe
+Sexe = c("F", "F", "G","F","G", "G", "G", "G", "G", "G")
+```
+
+
+1.1. Vecteur pour calculer l'âge des individus
+```{r}
+# Vecteur An
+An <- c(3, 3, 3, 4, 3, 4, 3, 3, 4, 3)
+# length(An)
+# Vecteur Mois
+
+Mois <- c(5, 10, 5, 0, 8, 0, 11, 9, 1, 3)
+# length(Mois)
+# Calculer l'âge des individus
+
+Age <- round(An + Mois/12, 1)
+# Age
+```
+
+2. La moyenne des variables (variables quantitatives)
+
+```{r}
+#moyenne de la taille
+moyenne_taille <- mean(Taille)
+moyenne_poids <- mean(Poids)
+moyenne_age <- mean(Age)
+
+# Affichage des moyennes
+cat("La moyenne des tailles : ", moyenne_taille, "cm\n")
+cat("La moyenne des poids : ", moyenne_poids, "kg\n")
+cat("La moyenne des âges : ", moyenne_age, "an(s)\n")
+
+```
+
+
+3. Calcul de l'indice de masse corporelle (IMC)
+
+```{r}
+# Taille en mètre
+taille_m <- Taille / 100
+
+# Calcul de l'IMC
+IMC_echantillon = round((Poids / (taille_m)^2), 2)
+# IMC_echantillon
+
+cat("Valeur de l'IMC: \n")
+for (i in 1:length(Individus)) {
+  cat(Individus[i], " : " ,IMC_echantillon[i], "kg/m²\n")
+}
+
+```
+
+
+4. Structure en dataframe
+
+```{r}
+enfant_df <- data.frame(
+  Individus = Individus, 
+  Sexe = Sexe, 
+  Poids = Poids, 
+  Taille = Taille,
+  Age_complet = Age, 
+  IMC_echantillon = IMC_echantillon
+)
+
+enfant_df
+```
+
+
+5. Obtenir les informations sur la fonction plot()
+
+```{r}
+#| results: hide
+
+
+# Informations sur la fonction plot()
+?plot()
+```
+
+
+6. Nuage de points du Poids en fonction de la taille
+
+6.1 Installation du package de plotly
+
+```{r}
+#| warning: false
+#| results: hide
+
+
+# Installation de plotly()
+# install.packages("plotly")
+# Chargement du package
+library(plotly)
+install.packages("webshot2")
+```
+
+
+6.2 Calcul du coéfficient de corrélation 
+
+```{r}
+# Coéfficient de corrélation entre le Poids et la taille
+correlation <- cor(Taille, Poids)
+cat("Le coéfficient de corrélation entre la taille et le poids est de : ",
+    round(correlation, 3))
+```
+
+
+6.3 Création du graphique
+
+
+```{r}
+#| echo: false
+#| output: false
+#| warning: false
+#| message: false
+
+
+# Création du plot
+plot <- plot_ly(
+  data = enfant_df, 
+  x = ~Taille, 
+  y = ~Poids, 
+  color = ~Sexe, 
+  colors = c('F' = 'pink', 'G' = 'blue'),
+  type = 'scatter', 
+  mode = 'markers',
+  text = ~paste(
+    "Enfant : ", Individus,
+    "<br>Sexe : ", Sexe, 
+    "<br>Taille : ", Taille, "cm",
+    "<br>Poids : ", Poids, "kg"
+  ), 
+  hoverinfo = "text", 
+  marker = list(
+    size = 10,          
+    opacity = 0.9, 
+    line = list(width = 1)  
+  )
+)
+```
+
+```{r}
+#| warning: false
+#| results: hide
+
+
+# Ajout de la droite de régression
+plot <- plot %>%
+  add_trace(
+    x = ~Taille, 
+    y = ~fitted(lm(Poids ~ Taille, data = enfant_df)),
+    type = 'scatter', 
+    mode = 'lines', 
+    name = "Régression linéaire", 
+    line = list(color = "red", width = 3, dash = "solid"),
+    showlegend = FALSE
+  ) %>%
+  layout(
+    title = list(
+      text = '<br><b>Relation Poids-Taille par Sexe</b></br>',
+      x = 0.5,
+      font = list(size = 18)
+    ),
+    xaxis = list(
+      title = 'Taille (cm)',
+      zeroline = FALSE,
+      gridcolor = 'lightgrey'
+    ),
+    yaxis = list(
+      title = 'Poids (kg)',
+      zeroline = FALSE,
+      gridcolor = 'lightgrey'
+    ),
+    plot_bgcolor = 'white',
+    legend = list(x = 0.02, y = 0.98),
+    annotations = list(
+      list(
+        x = 0.02, y = 0.02,
+        xref = "paper", yref = "paper",
+        text = paste("r =", round(correlation, 3)),
+        showarrow = FALSE,
+        font = list(size = 14, color = "black"),
+        bgcolor = "lightyellow",
+        bordercolor = "orange"
+      )
+    )
+  )
+
+# Affichage du graphique
+plot
+
+```
+
+Sortie du code
+
+![](../images/Rplot_plotly.png)
+
