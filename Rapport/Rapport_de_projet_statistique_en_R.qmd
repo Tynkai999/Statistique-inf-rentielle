@@ -245,6 +245,8 @@ for (i in 1:length(Individus)) {
 
 4. Structure en dataframe
 
+
+
 ```{r}
 enfant_df <- data.frame(
   Individus = Individus, 
@@ -345,7 +347,7 @@ plot <- plot %>%
     mode = 'lines', 
     name = "Régression linéaire", 
     line = list(color = "red", width = 3, dash = "solid"),
-    showlegend = FALSE
+    showlegend = TRUE
   ) %>%
   layout(
     title = list(
@@ -386,4 +388,193 @@ plot
 Sortie du code
 
 ![](../images/Rplot_plotly.png)
+
+
+
+
+
+
+
+# ***Exercice 4  : ANOVA***
+
+1. Les conditions fondamentales nécessaire pour la réalisation du test d'anova
+
+* Indépendances des observations
+* Normalité des données
+* Homogénéité des variances
+
+
+2. Vérifications des conditions
+
+```{r}
+# Création des données
+foret1 <- c(23.3, 24.4, 24.6, 24.9, 25.0, 26.2)
+foret2 <- c(18.9, 21.1, 21.1, 22.1, 22.5, 23.5)
+foret3 <- c(22.5, 22.9, 23.7, 24.0, 24.0, 24.5)
+
+hauteur  <- c(foret1, foret2, foret3)
+foret    <- factor(rep(c("Forêt 1", "Forêt 2", "Forêt 3"), each = 6))
+
+donnees <- data.frame(hauteur, foret)
+# donnees
+
+```
+
+
+2.1. Indépendances des observations
+
+L’indépendance des observations est supposée car les données sont issues d’un échantillonnage aléatoire simple et chaque observation correspond à un individu distinct.
+
+
+2.2. Test de Shapiro-Wilk pour la normalité données
+
+```{r}
+modele <- aov(hauteur ~ foret, data = donnees)
+residus <- residuals(modele)
+shapiro.test(residus)
+
+```
+
+On a le p-value(0.8848) > 0.05 donc l'hypothèse de normalité est donc vérifiée.
+
+
+
+2.3. Vérification de l'homogénéité des variances par le test de Levene
+
+
+```{r}
+library(carData)
+
+# leveneTest(hauteur ~ foret, data = donnees)
+
+```
+
+
+La valeur p du test (Pr = 0.307) est superieur à notre seuil de risque 0.05.
+Ainsi nous concluons que les variances entre les trois groupes sont égales.
+
+
+3. Justifions par le calcul que la hauteur des plantes dans la forêt sont
+significativement différentes avec un seuil de confiance de 95%
+
+
+3.1 Formulations des hypothèses
+
+* Hypothèse $H_0$ : Les variables 'forêt' et 'hauteur' sont indépendantes
+(les hauteurs moyennes sont égales dans les trois forêts)
+* Hypoyhèse $H_1$ : Les variables 'foret' et 'hauteur' sont liées.
+
+
+3.2. Niveau de risque $\alpha$ = 0.05.
+
+3.3. Calculons F
+
+3.3.a. Calcul de la moyenne
+```{r}
+# Moyenne des echantillons
+moyennes <- tapply(donnees$hauteur, donnees$foret, mean)
+moyennes
+```
+
+3.3.b. Calcul de la moyenne des moyennes
+
+```{r}
+# Moyenne generale(moyenne des moyenne)
+M <- mean(moyennes)
+M
+```
+
+
+
+3.4. Calcul de la somme des carrées inter-classes
+
+```{r}
+n <- 6 # Effectif de la foret
+
+SCE_inter <- sum(n * (moyennes - M)^2)
+SCE_inter
+
+```
+
+
+3.5. Calcul de la somme des carrées intra-classes
+
+```{r}
+# Somme des carrée intra classes
+
+SCE_intra = sum(tapply(donnees$hauteur, donnees$foret, 
+                       function(x) sum(1 * (x - mean(x))^2)))
+
+
+SCE_intra
+```
+
+3.6. Dégré de liberté
+
+```{r}
+
+dl_entre <- length(moyennes) - 1
+dl_entre
+
+dl_residuel <- nrow(donnees) - length(moyennes)
+dl_residuel
+
+```
+
+
+3.7. Calcul des carrées des moyenne
+
+```{r}
+CM_entre <- SCE_inter / dl_entre
+CM_entre
+
+CM_residuel <- SCE_intra / dl_residuel
+CM_residuel
+```
+
+
+3.8. Calcul de la variable statistique (F_calcule)
+
+```{r}
+F_calcule <- CM_entre / CM_residuel
+F_calcule
+```
+
+3.9. Calcul de la variable observé (F_obs)
+
+```{r}
+
+F_obs <- qf(0.95, df1=dl_entre, df=dl_residuel)
+F_obs
+```
+
+3.3.10.Comparaison de F_calcule et F_obs
+
+```{r}
+
+if (F_calcule > F_obs){
+  cat("Les variables 'forêt' et 'hauteur' sont liées \n")
+  cat("(au moins une forêt a une hauteur moyenne différente).")
+} else {
+  cat("H0 : Les variables 'forêt' et 'hauteur' sont indépendantes\n")
+  cat("     (les hauteurs moyennes sont égales dans les trois forêts)\n")
+}
+```
+
+3.3.11. Calculer le rapport de corrélation
+
+```{r}
+R_corr <- SCE_inter / (SCE_inter + SCE_intra)
+
+R_corr
+```
+
+Conclsion : Les variables sont liées, et la rapport de corrélation montre une 
+forte liaisons entre les variable (R² tends vers 1)
+
+
+
+
+
+
 
