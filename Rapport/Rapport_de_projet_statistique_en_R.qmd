@@ -1,5 +1,12 @@
 ---
 title: "Rapport de projet statistique inférentielle en R"
+author: 
+  - "BOUSSIN W. Ella  Perside"
+  - "OUEDRAOGO B. Emilie"
+  - "BAMOGO Cheick"
+  - "GAMBO Mickaël"
+  - "BONI T. Nathanaël"
+
 format:
   pdf:
     toc: true
@@ -574,7 +581,12 @@ forte liaisons entre les variable (R² tends vers 1)
 
 
 
+# Membres du groupe
 
-
+  - "BOUSSIN W. Ella  Perside"
+  - "OUEDRAOGO B. Emilie"
+  - "BAMOGO Cheick"
+  - "GAMBO Mickaël"
+  - "BONI T. Nathanaël"
 
 
